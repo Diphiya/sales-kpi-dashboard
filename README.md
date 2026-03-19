@@ -1,10 +1,10 @@
-# 📊 Sales Performance & KPI Dashboard
+#  Sales Performance & KPI Dashboard
 
 > End-to-end sales analytics project using SQL, Power BI, and Excel — tracking revenue, profit margins, regional performance, and customer segments.
 
 ---
 
-## 🗂️ Project Overview
+##  Project Overview
 
 This project analyzes sales data to track key performance indicators (KPIs) and surface actionable business insights. It includes:
 
@@ -15,7 +15,7 @@ This project analyzes sales data to track key performance indicators (KPIs) and 
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 sales-kpi-dashboard/
@@ -41,7 +41,7 @@ sales-kpi-dashboard/
 
 ---
 
-## 🧰 Tools & Technologies
+##  Tools & Technologies
 
 | Tool | Purpose |
 |------|---------|
@@ -52,7 +52,7 @@ sales-kpi-dashboard/
 
 ---
 
-## 📌 Key KPIs Tracked
+##  Key KPIs Tracked
 
 - **Total Revenue** — Monthly and YTD
 - **Profit Margin (%)** — By product and region
@@ -64,7 +64,7 @@ sales-kpi-dashboard/
 
 ---
 
-## 🚀 Getting Started
+
 
 ### 1. Set Up the Database
 
@@ -115,7 +115,7 @@ psql -U your_user -d your_db -f sql/04_regional_performance.sql
 
 ---
 
-## 💡 Key Findings
+##  Key Findings
 
 See [`docs/insights_report.md`](docs/insights_report.md) for the full analysis. Highlights:
 
@@ -127,7 +127,7 @@ See [`docs/insights_report.md`](docs/insights_report.md) for the full analysis. 
 
 ---
 
-## 📂 Data Dictionary
+##  Data Dictionary
 
 See [`data/data_dictionary.md`](data/data_dictionary.md) for full column descriptions.
 
@@ -148,8 +148,5 @@ Key columns in `sales_data.csv`:
 | `profit` | DECIMAL | Revenue minus cost |
 
 
-[MIT](LICENSE)
-
----
 
 *Built with SQL · Power BI · Excel*
