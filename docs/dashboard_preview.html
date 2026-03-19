@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Sales KPI Dashboard — Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1923; color: #e0e6ef; }
+  header { background: linear-gradient(135deg, #1a3a5c 0%, #0f2744 100%);
+           padding: 20px 32px; display: flex; align-items: center; gap: 16px;
+           border-bottom: 2px solid #2e75b6; }
+  header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  header p  { font-size: 0.8rem; color: #90aac8; margin-top: 2px; }
+  .badge { background: #2e75b6; color: #fff; font-size: 0.68rem;
+           padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+  .container { padding: 24px 32px; }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: linear-gradient(135deg, #1c3252, #162840);
+               border: 1px solid #2a4a6e; border-radius: 10px; padding: 18px 16px;
+               text-align: center; position: relative; overflow: hidden; }
+  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .kpi-card.rev::before  { background: #2e75b6; }
+  .kpi-card.profit::before { background: #70ad47; }
+  .kpi-card.margin::before { background: #ffd966; }
+  .kpi-card.orders::before { background: #ed7d31; }
+  .kpi-card.units::before  { background: #ae44c5; }
+  .kpi-card .icon  { font-size: 1.4rem; margin-bottom: 6px; }
+  .kpi-card .value { font-size: 1.45rem; font-weight: 700; color: #fff; }
+  .kpi-card .label { font-size: 0.72rem; color: #7a9abf; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-card .delta { font-size: 0.72rem; margin-top: 6px; font-weight: 600; }
+  .delta.up   { color: #70ad47; }
+  .delta.down { color: #e05d5d; }
+
+  /* Charts grid */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .charts-grid2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .card { background: #162840; border: 1px solid #223d5e; border-radius: 10px; padding: 18px; }
+  .card h3 { font-size: 0.82rem; color: #90aac8; text-transform: uppercase;
+              letter-spacing: .6px; margin-bottom: 14px; font-weight: 600; }
+
+  /* Bar charts */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { font-size: 0.76rem; color: #bbd0e8; width: 120px; text-align: right;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-label.short { width: 80px; }
+  .bar-track { flex: 1; height: 22px; background: #1a3252; border-radius: 4px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 4px; display: flex; align-items: center;
+               padding-left: 8px; font-size: 0.7rem; font-weight: 600; color: #fff;
+               transition: width .6s ease; }
+  .bar-val { font-size: 0.72rem; color: #90aac8; width: 70px; }
+
+  /* Line chart */
+  .line-chart { position: relative; height: 160px; }
+  svg.line { width: 100%; height: 100%; }
+
+  /* Region table */
+  .region-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+  .region-table th { background: #1a3252; color: #7a9abf; padding: 8px 10px;
+                      text-align: left; font-weight: 600; text-transform: uppercase;
+                      font-size: 0.68rem; letter-spacing: .4px; }
+  .region-table td { padding: 8px 10px; border-bottom: 1px solid #1e3a5a; }
+  .region-table tr:hover td { background: #1c3555; }
+  .status-badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .status-ok   { background: #1a3d20; color: #70ad47; }
+  .status-warn { background: #3d2020; color: #e05d5d; }
+  .status-mid  { background: #2a3d1a; color: #ffd966; }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .legend     { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; }
+  .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Heatmap */
+  .heatmap { display: grid; gap: 4px; }
+  .hm-row  { display: flex; gap: 4px; align-items: center; }
+  .hm-label { font-size: 0.68rem; color: #7a9abf; width: 32px; text-align: right; }
+  .hm-cell  { width: 28px; height: 24px; border-radius: 3px; cursor: default; }
+  .hm-header { display: flex; gap: 4px; padding-left: 36px; margin-bottom: 4px; }
+  .hm-hlabel { width: 28px; text-align: center; font-size: 0.6rem; color: #7a9abf; }
+
+  footer { text-align: center; padding: 16px; font-size: 0.72rem; color: #3d5a7a;
+           border-top: 1px solid #1e3a5a; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📊 Sales Performance & KPI Dashboard</h1>
+    <p>2022 – 2024 &nbsp;|&nbsp; All Regions &nbsp;|&nbsp; All Segments</p>
+  </div>
+  <span class="badge">Power BI Preview</span>
+</header>
+
+<div class="container">
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card rev">
+      <div class="icon">💰</div>
+      <div class="value">$4.87M</div>
+      <div class="label">Total Revenue</div>
+      <div class="delta up">▲ 12.4% YoY</div>
+    </div>
+    <div class="kpi-card profit">
+      <div class="icon">📈</div>
+      <div class="value">$1.63M</div>
+      <div class="label">Gross Profit</div>
+      <div class="delta up">▲ 9.1% YoY</div>
+    </div>
+    <div class="kpi-card margin">
+      <div class="icon">📊</div>
+      <div class="value">33.5%</div>
+      <div class="label">Profit Margin</div>
+      <div class="delta down">▼ 1.0pp YoY</div>
+    </div>
+    <div class="kpi-card orders">
+      <div class="icon">🛒</div>
+      <div class="value">1,847</div>
+      <div class="label">Total Orders</div>
+      <div class="delta up">▲ 7.3% YoY</div>
+    </div>
+    <div class="kpi-card units">
+      <div class="icon">📦</div>
+      <div class="value">12,340</div>
+      <div class="label">Units Sold</div>
+      <div class="delta up">▲ 5.8% YoY</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Line chart + Region table -->
+  <div class="charts-grid">
+    <div class="card">
+      <h3>Monthly Revenue Trend</h3>
+      <div class="line-chart">
+        <svg class="line" viewBox="0 0 520 155" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2e75b6" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#2e75b6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- grid lines -->
+          <line x1="0" y1="30"  x2="520" y2="30"  stroke="#1e3a5a" stroke-width="1"/>
+          <line x1="0" y1="65"  x2="520" y2="65"  stroke="#1e3a5a" stroke-width="1"/>
+          <line x1="0" y1="100" x2="520" y2="100" stroke="#1e3a5a" stroke-width="1"/>
+          <line x1="0" y1="135" x2="520" y2="135" stroke="#1e3a5a" stroke-width="1"/>
+          <!-- y labels -->
+          <text x="0" y="28"  fill="#4a6a8a" font-size="9">$250k</text>
+          <text x="0" y="63"  fill="#4a6a8a" font-size="9">$175k</text>
+          <text x="0" y="98"  fill="#4a6a8a" font-size="9">$100k</text>
+          <text x="0" y="133" fill="#4a6a8a" font-size="9">$25k</text>
+          <!-- 2022 line (muted) -->
+          <polyline fill="none" stroke="#2a4a6e" stroke-width="1.5"
+            points="40,115 80,108 120,95 160,88 200,102 240,92 280,85 320,78 360,72 400,68 440,55 480,45"/>
+          <!-- 2023 line -->
+          <polyline fill="none" stroke="#70ad47" stroke-width="1.5" stroke-dasharray="4,2"
+            points="40,105 80,98 120,88 160,80 200,94 240,82 280,72 320,65 360,58 400,52 440,40 480,32"/>
+          <!-- 2024 area + line -->
+          <polygon fill="url(#lineGrad)"
+            points="40,135 40,100 80,90 120,78 160,70 200,84 240,72 280,60 320,52 360,45 400,38 440,28 480,20 480,135"/>
+          <polyline fill="none" stroke="#2e75b6" stroke-width="2.5"
+            points="40,100 80,90 120,78 160,70 200,84 240,72 280,60 320,52 360,45 400,38 440,28 480,20"/>
+          <!-- dots -->
+          <circle cx="480" cy="20"  r="4" fill="#2e75b6"/>
+          <circle cx="440" cy="28"  r="3" fill="#2e75b6"/>
+          <!-- x labels -->
+          <text x="38"  y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">Jan</text>
+          <text x="120" y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">Mar</text>
+          <text x="200" y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">May</text>
+          <text x="280" y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">Jul</text>
+          <text x="360" y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">Sep</text>
+          <text x="440" y="150" fill="#4a6a8a" font-size="8" text-anchor="middle">Nov</text>
+          <!-- legend -->
+          <rect x="340" y="8" width="8" height="3" fill="#2a4a6e"/>
+          <text x="352" y="13" fill="#7a9abf" font-size="8">2022</text>
+          <line x1="372" y1="10" x2="380" y2="10" stroke="#70ad47" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="382" y="13" fill="#7a9abf" font-size="8">2023</text>
+          <rect x="402" y="7" width="8" height="4" fill="#2e75b6"/>
+          <text x="414" y="13" fill="#7a9abf" font-size="8">2024</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Regional Performance</h3>
+      <table class="region-table">
+        <tr><th>Region</th><th>Revenue</th><th>Status</th></tr>
+        <tr><td>West</td><td>$952k</td><td><span class="status-badge status-ok">✅ Top</span></td></tr>
+        <tr><td>Midwest</td><td>$887k</td><td><span class="status-badge status-ok">✅ Good</span></td></tr>
+        <tr><td>South-East</td><td>$834k</td><td><span class="status-badge status-mid">➖ On Target</span></td></tr>
+        <tr><td>South-Central</td><td>$802k</td><td><span class="status-badge status-mid">➖ On Target</span></td></tr>
+        <tr><td>North-West</td><td>$756k</td><td><span class="status-badge status-mid">➖ On Target</span></td></tr>
+        <tr><td>North-East</td><td>$639k</td><td><span class="status-badge status-warn">⚠️ Low</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Row 3: Products, Segments, Heatmap -->
+  <div class="charts-grid2">
+    <div class="card">
+      <h3>Top Products by Revenue</h3>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">Monitors Model 2</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:#2e75b6;">$142k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Laptops Model 1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:88%;background:#2e75b6;">$125k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Laptops Model 3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:78%;background:#3a80c0;">$111k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Phones Model 2</div>
+          <div class="bar-track"><div class="bar-fill" style="width:68%;background:#3a80c0;">$97k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Desks Model 1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:58%;background:#4a8fce;">$82k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Monitors Model 1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:51%;background:#4a8fce;">$72k</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Chairs Model 3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:44%;background:#5a9edd;">$63k</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Revenue by Customer Segment</h3>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="120" height="120" style="flex-shrink:0">
+          <!-- Consumer 52% -->
+          <circle cx="60" cy="60" r="40" fill="transparent"
+            stroke="#2e75b6" stroke-width="20"
+            stroke-dasharray="130.5 120.9"
+            stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+          <!-- Corporate 30% -->
+          <circle cx="60" cy="60" r="40" fill="transparent"
+            stroke="#70ad47" stroke-width="20"
+            stroke-dasharray="75.4 176"
+            stroke-dashoffset="-130.5" transform="rotate(-90 60 60)"/>
+          <!-- Home Office 18% -->
+          <circle cx="60" cy="60" r="40" fill="transparent"
+            stroke="#ffd966" stroke-width="20"
+            stroke-dasharray="45.2 206.2"
+            stroke-dashoffset="-205.9" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="28" fill="#162840"/>
+          <text x="60" y="56" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">52%</text>
+          <text x="60" y="68" text-anchor="middle" fill="#7a9abf" font-size="7">Consumer</text>
+        </svg>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#2e75b6"></div><span>Consumer — 52%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#70ad47"></div><span>Corporate — 30%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ffd966"></div><span>Home Office — 18%</span></div>
+        </div>
+      </div>
+      <div style="margin-top:16px; border-top:1px solid #1e3a5a; padding-top:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;font-size:0.72rem;">
+          <div><div style="color:#fff;font-weight:700;">$2.53M</div><div style="color:#7a9abf">Consumer</div></div>
+          <div><div style="color:#fff;font-weight:700;">$1.46M</div><div style="color:#7a9abf">Corporate</div></div>
+          <div><div style="color:#fff;font-weight:700;">$876k</div><div style="color:#7a9abf">Home Office</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Seasonal Revenue Heatmap</h3>
+      <div class="hm-header">
+        <div class="hm-hlabel">J</div><div class="hm-hlabel">F</div><div class="hm-hlabel">M</div>
+        <div class="hm-hlabel">A</div><div class="hm-hlabel">M</div><div class="hm-hlabel">J</div>
+        <div class="hm-hlabel">J</div><div class="hm-hlabel">A</div><div class="hm-hlabel">S</div>
+        <div class="hm-hlabel">O</div><div class="hm-hlabel">N</div><div class="hm-hlabel">D</div>
+      </div>
+      <!-- Each cell opacity = relative revenue intensity -->
+      <div class="hm-row">
+        <div class="hm-label">2022</div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.35)" title="Jan 2022"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.30)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.45)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.50)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.55)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.48)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.30)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.28)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.55)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.65)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.75)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.90)"></div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-label">2023</div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.38)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.33)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.50)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.55)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.60)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.52)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.33)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.32)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.60)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.72)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.83)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.98)"></div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-label">2024</div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.42)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.36)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.55)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.60)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.65)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.56)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.35)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.34)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.65)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.78)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,0.90)"></div>
+        <div class="hm-cell" style="background:rgba(46,117,182,1.00)"></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:12px;align-items:center;">
+        <span style="font-size:0.65rem;color:#4a6a8a">Low</span>
+        <div style="display:flex;gap:2px;">
+          <div style="width:14px;height:10px;border-radius:2px;background:rgba(46,117,182,0.2)"></div>
+          <div style="width:14px;height:10px;border-radius:2px;background:rgba(46,117,182,0.4)"></div>
+          <div style="width:14px;height:10px;border-radius:2px;background:rgba(46,117,182,0.6)"></div>
+          <div style="width:14px;height:10px;border-radius:2px;background:rgba(46,117,182,0.8)"></div>
+          <div style="width:14px;height:10px;border-radius:2px;background:rgba(46,117,182,1.0)"></div>
+        </div>
+        <span style="font-size:0.65rem;color:#4a6a8a">High</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Category margins -->
+  <div class="card">
+    <h3>Category Performance — Revenue vs. Profit Margin</h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:6px;">
+          <span style="color:#bbd0e8;font-weight:600;">💻 Technology</span>
+          <span style="color:#70ad47;font-weight:700;">38.2%</span>
+        </div>
+        <div style="background:#1a3252;border-radius:4px;height:10px;">
+          <div style="width:76%;height:100%;background:linear-gradient(90deg,#2e75b6,#70ad47);border-radius:4px;"></div>
+        </div>
+        <div style="font-size:0.68rem;color:#4a6a8a;margin-top:4px;">$2.10M revenue</div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:6px;">
+          <span style="color:#bbd0e8;font-weight:600;">🗂️ Office Supplies</span>
+          <span style="color:#ffd966;font-weight:700;">31.5%</span>
+        </div>
+        <div style="background:#1a3252;border-radius:4px;height:10px;">
+          <div style="width:63%;height:100%;background:linear-gradient(90deg,#2e75b6,#ffd966);border-radius:4px;"></div>
+        </div>
+        <div style="font-size:0.68rem;color:#4a6a8a;margin-top:4px;">$1.54M revenue</div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:6px;">
+          <span style="color:#bbd0e8;font-weight:600;">🪑 Furniture</span>
+          <span style="color:#e05d5d;font-weight:700;">24.8%</span>
+        </div>
+        <div style="background:#1a3252;border-radius:4px;height:10px;">
+          <div style="width:50%;height:100%;background:linear-gradient(90deg,#2e75b6,#e05d5d);border-radius:4px;"></div>
+        </div>
+        <div style="font-size:0.68rem;color:#4a6a8a;margin-top:4px;">$1.23M revenue</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Sales KPI Dashboard &nbsp;·&nbsp; Built with SQL · Power BI · Excel &nbsp;·&nbsp; Data: 2022–2024</footer>
+
+</body>
+</html>
